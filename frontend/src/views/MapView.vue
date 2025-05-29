@@ -35,7 +35,7 @@
           <div id="map" class="w-full h-[70vh] rounded-xl shadow-lg border border-gray-200"></div>
           
           <!-- Map Controls -->
-          <div class="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-2 space-y-2">
+          <!-- <div class="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-2 space-y-2 z-50">
             <button
               @click="fitBounds"
               class="flex items-center justify-center w-10 h-10 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -50,10 +50,10 @@
             >
               <ArrowPathIcon class="h-5 w-5" />
             </button>
-          </div>
+          </div> -->
 
           <!-- Legend -->
-          <div class="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4">
+          <!-- <div class="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4">
             <h3 class="text-sm font-medium text-gray-900 mb-3">Legend</h3>
             <div class="space-y-2">
               <div class="flex items-center">
@@ -65,14 +65,14 @@
                 <span class="text-xs text-gray-600">Inactive Station</span>
               </div>
             </div>
-          </div>
+          </div> -->
         </div>
       </div>
 
       <!-- Station Details Panel -->
       <div
         v-if="selectedStation"
-        class="fixed bottom-4 right-4 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 fade-in"
+        class="fixed bottom-4 right-4 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-[60] fade-in"
       >
         <div class="flex items-center justify-between p-4 border-b border-gray-200">
           <h3 class="text-lg font-semibold text-gray-900">{{ selectedStation.name }}</h3>
@@ -287,5 +287,31 @@ export default {
 
 .leaflet-popup-tip {
   background: white;
+}
+
+/* Fix z-index for Leaflet map container */
+#map {
+  z-index: 1;
+}
+
+/* Ensure Leaflet controls are above the map */
+.leaflet-control-container {
+  z-index: 1000 !important;
+}
+
+.leaflet-control {
+  z-index: 1000 !important;
+}
+
+/* Ensure our custom controls are above the map */
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 1000 !important;
+}
+
+/* Fix for Leaflet attribution and zoom controls */
+.leaflet-control-attribution,
+.leaflet-control-zoom {
+  z-index: 1000 !important;
 }
 </style>
