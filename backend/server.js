@@ -6,7 +6,6 @@ const authRoutes = require("./routes/auth.routes")
 const stationRoutes = require("./routes/station.routes")
 
 const app = express()
-const PORT = process.env.PORT || 5000
 
 // Middleware
 app.use(
@@ -38,25 +37,6 @@ app.get("/", (req, res) => {
   })
 })
 
-// Health check route
-app.get("/health", async (req, res) => {
-  try {
-    await sequelize.authenticate()
-    res.json({
-      status: "healthy",
-      database: "connected",
-      timestamp: new Date().toISOString(),
-    })
-  } catch (error) {
-    res.status(500).json({
-      status: "unhealthy",
-      database: "disconnected",
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    })
-  }
-})
-
 // Start server
 async function startServer() {
   try {
@@ -69,10 +49,6 @@ async function startServer() {
     await sequelize.sync({ alter: true })
     console.log("Database models synchronized successfully.")
 
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`)
-      console.log(`Health check available at: http://localhost:${PORT}/health`)
-    })
   } catch (error) {
     console.error("Unable to connect to the database:", error)
     console.error("Please check your DATABASE_URL in the .env file")
