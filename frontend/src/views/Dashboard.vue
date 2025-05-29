@@ -344,7 +344,9 @@ export default {
     },
     applyFilters() {
       this.$store.dispatch('stations/fetchStations', this.filters)
-      this.$toast.info('Filters applied')
+      if (this.$toast) {
+        this.$toast.info('Filters applied')
+      }
     },
     resetFilters() {
       this.filters = {
@@ -354,7 +356,9 @@ export default {
         maxPower: null
       }
       this.fetchStations()
-      this.$toast.info('Filters reset')
+      if (this.$toast) {
+        this.$toast.info('Filters reset')
+      }
     },
     editStation(station) {
       this.currentStation = { ...station }
@@ -388,19 +392,27 @@ export default {
         })
           .then(() => {
             this.closeModal()
-            this.$toast.success('Station updated successfully!')
+            if (this.$toast) {
+              this.$toast.success('Station updated successfully!')
+            }
           })
           .catch(() => {
-            this.$toast.error('Failed to update station')
+            if (this.$toast) {
+              this.$toast.error('Failed to update station')
+            }
           })
       } else {
         this.$store.dispatch('stations/createStation', stationData)
           .then(() => {
             this.closeModal()
-            this.$toast.success('Station created successfully!')
+            if (this.$toast) {
+              this.$toast.success('Station created successfully!')
+            }
           })
           .catch(() => {
-            this.$toast.error('Failed to create station')
+            if (this.$toast) {
+              this.$toast.error('Failed to create station')
+            }
           })
       }
     },
@@ -409,10 +421,14 @@ export default {
         .then(() => {
           this.showDeleteModal = false
           this.resetCurrentStation()
-          this.$toast.success('Station deleted successfully!')
+          if (this.$toast) {
+            this.$toast.success('Station deleted successfully!')
+          }
         })
         .catch(() => {
-          this.$toast.error('Failed to delete station')
+          if (this.$toast) {
+            this.$toast.error('Failed to delete station')
+          }
         })
     }
   }

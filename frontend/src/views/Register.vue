@@ -162,18 +162,25 @@ export default {
           this.message = response.message || 'Registration successful! Please login.'
           this.successful = true
           this.loading = false
-          this.$toast.success('Account created successfully!')
+          
+          if (this.$toast) {
+            this.$toast.success('Account created successfully!')
+          }
+          
           setTimeout(() => {
             this.$router.push('/login')
           }, 2000)
         })
         .catch(error => {
           this.message = (error.response && error.response.data && error.response.data.message) ||
-                        error.message ||
-                        'Registration failed. Please try again.'
+                    error.message ||
+                    'Registration failed. Please try again.'
           this.successful = false
           this.loading = false
-          this.$toast.error(this.message)
+          
+          if (this.$toast) {
+            this.$toast.error(this.message)
+          }
         })
     }
   }

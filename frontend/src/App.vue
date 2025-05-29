@@ -117,7 +117,10 @@ export default {
     logout() {
       this.$store.dispatch('auth/logout')
       this.$router.push('/login')
-      this.$toast.success('Logged out successfully')
+      
+      if (this.$toast) {
+        this.$toast.success('Logged out successfully')
+      }
     },
   },
   mounted() {

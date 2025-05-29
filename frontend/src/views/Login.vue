@@ -158,15 +158,21 @@ export default {
       
       this.$store.dispatch('auth/login', this.user)
         .then(() => {
-          this.$toast.success('Welcome back!')
+          if (this.$toast) {
+            this.$toast.success('Welcome back!')
+          }
           this.$router.push('/dashboard')
         })
         .catch(error => {
           this.loading = false
           this.message = (error.response && error.response.data && error.response.data.message) ||
-                        error.message ||
-                        'Login failed. Please try again.'
-          this.$toast.error(this.message)
+                    error.message ||
+                    'Login failed. Please try again.'
+      
+          // Show toast notification if available
+          if (this.$toast) {
+            this.$toast.error(this.message)
+          }
         })
     }
   }

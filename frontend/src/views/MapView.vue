@@ -247,8 +247,10 @@ export default {
       }
     },
     refreshMap() {
-      this.fetchStations();
-      this.$toast.info('Map refreshed');
+      this.fetchStations()
+      if (this.$toast) {
+        this.$toast.info('Map refreshed')
+      }
     },
     getDirections() {
       if (this.selectedStation) {
