@@ -92,17 +92,6 @@
           </form>
         </div>
       </div>
-
-      <!-- Demo Credentials -->
-      <div class="card bg-blue-50 border-blue-200">
-        <div class="card-body">
-          <h3 class="text-sm font-medium text-blue-900 mb-2">Demo Credentials</h3>
-          <p class="text-xs text-blue-700">
-            <strong>Username:</strong> admin<br>
-            <strong>Password:</strong> admin123
-          </p>
-        </div>
-      </div>
     </div>
   </div>
 </template>
