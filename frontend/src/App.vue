@@ -1,35 +1,139 @@
 <template>
-  <div id="app">
-    <nav v-if="isLoggedIn" class="navbar">
-      <div class="navbar-brand">Charging Station Manager</div>
-      <div class="navbar-menu">
-        <router-link to="/dashboard">Dashboard</router-link>
-        <router-link to="/map">Map View</router-link>
-        <a href="#" @click.prevent="logout">Logout</a>
+  <div id="app" class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <!-- Navigation -->
+    <nav v-if="isLoggedIn" class="bg-white shadow-lg border-b border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center">
+              <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center mr-3">
+                <BoltIcon class="w-5 h-5 text-white" />
+              </div>
+              <h1 class="text-xl font-bold text-gray-900">ChargeMaster</h1>
+            </div>
+          </div>
+          
+          <div class="flex items-center space-x-4">
+            <router-link
+              to="/dashboard"
+              class="nav-link"
+              :class="{ 'nav-link-active': $route.path === '/dashboard' }"
+            >
+              <HomeIcon class="w-5 h-5 mr-2" />
+              Dashboard
+            </router-link>
+            <router-link
+              to="/map"
+              class="nav-link"
+              :class="{ 'nav-link-active': $route.path === '/map' }"
+            >
+              <MapIcon class="w-5 h-5 mr-2" />
+              Map View
+            </router-link>
+            
+            <!-- User Menu -->
+            <div class="relative">
+              <button
+                @click="showUserMenu = !showUserMenu"
+                class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                <UserCircleIcon class="w-6 h-6" />
+                <span>{{ currentUser?.username }}</span>
+                <ChevronDownIcon class="w-4 h-4" />
+              </button>
+              
+              <div
+                v-if="showUserMenu"
+                class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
+                @click="showUserMenu = false"
+              >
+                <a
+                  href="#"
+                  @click.prevent="logout"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                >
+                  <ArrowRightOnRectangleIcon class="w-4 h-4 inline mr-2" />
+                  Sign out
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </nav>
-    <router-view />
+
+    <!-- Main Content -->
+    <main class="flex-1">
+      <router-view />
+    </main>
+
+    <!-- Loading Overlay -->
+    <div v-if="globalLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+        <span class="text-gray-700">Loading...</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import {
+  BoltIcon,
+  HomeIcon,
+  MapIcon,
+  UserCircleIcon,
+  ChevronDownIcon,
+  ArrowRightOnRectangleIcon,
+} from '@heroicons/vue/24/outline'
+
 export default {
   name: 'App',
+  components: {
+    BoltIcon,
+    HomeIcon,
+    MapIcon,
+    UserCircleIcon,
+    ChevronDownIcon,
+    ArrowRightOnRectangleIcon,
+  },
+  data() {
+    return {
+      showUserMenu: false,
+    }
+  },
   computed: {
     isLoggedIn() {
-      return this.$store.state.auth.status.loggedIn;
-    }
+      return this.$store.state.auth.status.loggedIn
+    },
+    currentUser() {
+      return this.$store.state.auth.user
+    },
+    globalLoading() {
+      return this.$store.state.stations.loading
+    },
   },
   methods: {
     logout() {
-      this.$store.dispatch('auth/logout');
-      this.$router.push('/login');
-    }
-  }
+      this.$store.dispatch('auth/logout')
+      this.$router.push('/login')
+      this.$toast.success('Logged out successfully')
+    },
+  },
+  mounted() {
+    // Close user menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.relative')) {
+        this.showUserMenu = false
+      }
+    })
+  },
 }
 </script>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -37,10 +141,10 @@ export default {
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
-  color: #333;
-  background-color: #f4f7fa;
+  color: #374151;
+  background-color: #f8fafc;
 }
 
 #app {
@@ -49,107 +153,40 @@ body {
   flex-direction: column;
 }
 
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background-color: #2c3e50;
-  color: white;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
 }
 
-.navbar-brand {
-  font-size: 1.5rem;
-  font-weight: bold;
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
 }
 
-.navbar-menu {
-  display: flex;
-  gap: 1.5rem;
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 
-.navbar-menu a {
-  color: white;
-  text-decoration: none;
-  transition: color 0.3s;
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
-.navbar-menu a:hover {
-  color: #42b983;
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-  flex: 1;
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
 }
 
-.btn {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s;
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
 }
 
-.btn:hover {
-  background-color: #3aa876;
-}
-
-.btn-danger {
-  background-color: #e74c3c;
-}
-
-.btn-danger:hover {
-  background-color: #c0392b;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.form-control {
-  width: 100%;
-  padding: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.card {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.alert {
-  padding: 0.75rem 1.25rem;
-  margin-bottom: 1rem;
-  border-radius: 4px;
-}
-
-.alert-danger {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.alert-success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+.slide-in {
+  animation: slideIn 0.3s ease-out;
 }
 </style>

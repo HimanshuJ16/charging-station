@@ -1,198 +1,297 @@
 <template>
-  <div class="container">
-    <h1>Charging Stations Dashboard</h1>
-    
-    <div class="filters-container">
-      <div class="filter-group">
-        <label for="status">Status:</label>
-        <select id="status" v-model="filters.status" class="form-control">
-          <option value="">All</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-        </select>
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Charging Stations Dashboard</h1>
+        <p class="text-gray-600">Manage and monitor your EV charging infrastructure</p>
       </div>
-      
-      <div class="filter-group">
-        <label for="connector-type">Connector Type:</label>
-        <select id="connector-type" v-model="filters.connectorType" class="form-control">
-          <option value="">All</option>
-          <option v-for="type in connectorTypes" :key="type" :value="type">{{ type }}</option>
-        </select>
-      </div>
-      
-      <div class="filter-group">
-        <label for="min-power">Min Power (kW):</label>
-        <input
-          id="min-power"
-          v-model.number="filters.minPower"
-          type="number"
-          min="0"
-          class="form-control"
-          placeholder="Min"
-        />
-      </div>
-      
-      <div class="filter-group">
-        <label for="max-power">Max Power (kW):</label>
-        <input
-          id="max-power"
-          v-model.number="filters.maxPower"
-          type="number"
-          min="0"
-          class="form-control"
-          placeholder="Max"
-        />
-      </div>
-      
-      <button @click="applyFilters" class="btn">Apply Filters</button>
-      <button @click="resetFilters" class="btn btn-secondary">Reset</button>
-    </div>
-    
-    <div class="actions-container">
-      <button @click="showAddModal = true" class="btn">Add New Station</button>
-    </div>
-    
-    <div v-if="loading" class="loading">Loading...</div>
-    
-    <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-    
-    <div v-else-if="stations.length === 0" class="no-data">
-      No charging stations found. Add a new one to get started.
-    </div>
-    
-    <div v-else class="stations-grid">
-      <div v-for="station in stations" :key="station.id" class="station-card">
-        <div class="station-header">
-          <h3>{{ station.name }}</h3>
-          <span :class="['status-badge', station.status === 'Active' ? 'active' : 'inactive']">
-            {{ station.status }}
-          </span>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="card hover:shadow-lg transition-shadow">
+          <div class="card-body">
+            <div class="flex items-center">
+              <div class="p-3 rounded-lg bg-blue-100">
+                <BoltIcon class="h-6 w-6 text-blue-600" />
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Total Stations</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stations.length }}</p>
+              </div>
+            </div>
+          </div>
         </div>
-        
-        <div class="station-details">
-          <p><strong>Location:</strong> {{ station.latitude }}, {{ station.longitude }}</p>
-          <p><strong>Power Output:</strong> {{ station.powerOutput }} kW</p>
-          <p><strong>Connector Type:</strong> {{ station.connectorType }}</p>
+
+        <div class="card hover:shadow-lg transition-shadow">
+          <div class="card-body">
+            <div class="flex items-center">
+              <div class="p-3 rounded-lg bg-green-100">
+                <CheckCircleIcon class="h-6 w-6 text-green-600" />
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Active Stations</p>
+                <p class="text-2xl font-bold text-gray-900">{{ activeStations }}</p>
+              </div>
+            </div>
+          </div>
         </div>
-        
-        <div class="station-actions">
-          <button @click="editStation(station)" class="btn btn-sm">Edit</button>
-          <button @click="confirmDelete(station)" class="btn btn-sm btn-danger">Delete</button>
+
+        <div class="card hover:shadow-lg transition-shadow">
+          <div class="card-body">
+            <div class="flex items-center">
+              <div class="p-3 rounded-lg bg-red-100">
+                <XCircleIcon class="h-6 w-6 text-red-600" />
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Inactive Stations</p>
+                <p class="text-2xl font-bold text-gray-900">{{ inactiveStations }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card hover:shadow-lg transition-shadow">
+          <div class="card-body">
+            <div class="flex items-center">
+              <div class="p-3 rounded-lg bg-yellow-100">
+                <LightningBoltIcon class="h-6 w-6 text-yellow-600" />
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Total Power</p>
+                <p class="text-2xl font-bold text-gray-900">{{ totalPower }}kW</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-    
-    <!-- Add/Edit Modal -->
-    <div v-if="showAddModal || showEditModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>{{ showEditModal ? 'Edit' : 'Add' }} Charging Station</h2>
-          <button @click="closeModal" class="close-btn">&times;</button>
-        </div>
-        
-        <div class="modal-body">
-          <form @submit.prevent="showEditModal ? updateStation() : addStation()">
-            <div class="form-group">
-              <label for="name">Name:</label>
-              <input
-                id="name"
-                v-model="currentStation.name"
-                type="text"
-                class="form-control"
-                required
-              />
+
+      <!-- Filters and Actions -->
+      <div class="card mb-8">
+        <div class="card-body">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+            <!-- Filters -->
+            <div class="flex flex-wrap gap-4">
+              <div class="min-w-0 flex-1 lg:flex-none lg:w-40">
+                <select v-model="filters.status" class="form-select">
+                  <option value="">All Status</option>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+              
+              <div class="min-w-0 flex-1 lg:flex-none lg:w-48">
+                <select v-model="filters.connectorType" class="form-select">
+                  <option value="">All Connectors</option>
+                  <option v-for="type in connectorTypes" :key="type" :value="type">{{ type }}</option>
+                </select>
+              </div>
+              
+              <div class="min-w-0 flex-1 lg:flex-none lg:w-32">
+                <input
+                  v-model.number="filters.minPower"
+                  type="number"
+                  min="0"
+                  class="form-input"
+                  placeholder="Min kW"
+                />
+              </div>
+              
+              <div class="min-w-0 flex-1 lg:flex-none lg:w-32">
+                <input
+                  v-model.number="filters.maxPower"
+                  type="number"
+                  min="0"
+                  class="form-input"
+                  placeholder="Max kW"
+                />
+              </div>
+              
+              <button @click="applyFilters" class="btn btn-outline">
+                <FunnelIcon class="h-4 w-4 mr-2" />
+                Apply
+              </button>
+              
+              <button @click="resetFilters" class="btn btn-outline">
+                <XMarkIcon class="h-4 w-4 mr-2" />
+                Reset
+              </button>
             </div>
-            
-            <div class="form-group">
-              <label for="latitude">Latitude:</label>
-              <input
-                id="latitude"
-                v-model.number="currentStation.latitude"
-                type="number"
-                step="0.000001"
-                class="form-control"
-                required
-              />
-            </div>
-            
-            <div class="form-group">
-              <label for="longitude">Longitude:</label>
-              <input
-                id="longitude"
-                v-model.number="currentStation.longitude"
-                type="number"
-                step="0.000001"
-                class="form-control"
-                required
-              />
-            </div>
-            
-            <div class="form-group">
-              <label for="status">Status:</label>
-              <select id="status" v-model="currentStation.status" class="form-control" required>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label for="power-output">Power Output (kW):</label>
-              <input
-                id="power-output"
-                v-model.number="currentStation.powerOutput"
-                type="number"
-                min="0"
-                step="0.1"
-                class="form-control"
-                required
-              />
-            </div>
-            
-            <div class="form-group">
-              <label for="connector-type">Connector Type:</label>
-              <input
-                id="connector-type"
-                v-model="currentStation.connectorType"
-                type="text"
-                class="form-control"
-                required
-              />
-            </div>
-            
-            <div class="form-actions">
-              <button type="submit" class="btn">{{ showEditModal ? 'Update' : 'Add' }}</button>
-              <button type="button" @click="closeModal" class="btn btn-secondary">Cancel</button>
-            </div>
-          </form>
+
+            <!-- Actions -->
+            <button @click="showAddModal = true" class="btn btn-primary">
+              <PlusIcon class="h-4 w-4 mr-2" />
+              Add Station
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-    
-    <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Confirm Delete</h2>
-          <button @click="showDeleteModal = false" class="close-btn">&times;</button>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="flex justify-center items-center py-12">
+        <div class="text-center">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p class="text-gray-600">Loading stations...</p>
         </div>
-        
-        <div class="modal-body">
-          <p>Are you sure you want to delete the charging station "{{ currentStation.name }}"?</p>
-          <div class="form-actions">
-            <button @click="deleteStation" class="btn btn-danger">Delete</button>
-            <button @click="showDeleteModal = false" class="btn btn-secondary">Cancel</button>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="card bg-red-50 border-red-200">
+        <div class="card-body text-center">
+          <ExclamationTriangleIcon class="h-12 w-12 text-red-600 mx-auto mb-4" />
+          <h3 class="text-lg font-medium text-red-900 mb-2">Error Loading Stations</h3>
+          <p class="text-red-700">{{ error }}</p>
+          <button @click="fetchStations" class="btn btn-primary mt-4">
+            <ArrowPathIcon class="h-4 w-4 mr-2" />
+            Retry
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="stations.length === 0" class="card">
+        <div class="card-body text-center py-12">
+          <BoltIcon class="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No charging stations found</h3>
+          <p class="text-gray-600 mb-6">Get started by adding your first charging station.</p>
+          <button @click="showAddModal = true" class="btn btn-primary">
+            <PlusIcon class="h-4 w-4 mr-2" />
+            Add Your First Station
+          </button>
+        </div>
+      </div>
+
+      <!-- Stations Grid -->
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          v-for="station in stations"
+          :key="station.id"
+          class="card hover:shadow-lg transition-all duration-200 fade-in"
+        >
+          <div class="card-body">
+            <!-- Station Header -->
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ station.name }}</h3>
+                <span :class="['badge', station.status === 'Active' ? 'badge-success' : 'badge-danger']">
+                  {{ station.status }}
+                </span>
+              </div>
+              <div class="flex space-x-2">
+                <button
+                  @click="editStation(station)"
+                  class="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                  title="Edit"
+                >
+                  <PencilIcon class="h-4 w-4" />
+                </button>
+                <button
+                  @click="confirmDelete(station)"
+                  class="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                  title="Delete"
+                >
+                  <TrashIcon class="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Station Details -->
+            <div class="space-y-3">
+              <div class="flex items-center text-sm text-gray-600">
+                <MapPinIcon class="h-4 w-4 mr-2 text-gray-400" />
+                <span>{{ station.latitude }}, {{ station.longitude }}</span>
+              </div>
+              
+              <div class="flex items-center text-sm text-gray-600">
+                <BoltIcon class="h-4 w-4 mr-2 text-gray-400" />
+                <span>{{ station.powerOutput }} kW</span>
+              </div>
+              
+              <div class="flex items-center text-sm text-gray-600">
+                <CpuChipIcon class="h-4 w-4 mr-2 text-gray-400" />
+                <span>{{ station.connectorType }}</span>
+              </div>
+            </div>
+
+            <!-- Station Actions -->
+            <div class="mt-6 flex space-x-3">
+              <button @click="editStation(station)" class="btn btn-outline flex-1">
+                <PencilIcon class="h-4 w-4 mr-2" />
+                Edit
+              </button>
+              <button @click="confirmDelete(station)" class="btn btn-danger flex-1">
+                <TrashIcon class="h-4 w-4 mr-2" />
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Add/Edit Modal -->
+    <StationModal
+      v-if="showAddModal || showEditModal"
+      :show="showAddModal || showEditModal"
+      :station="currentStation"
+      :is-editing="showEditModal"
+      @close="closeModal"
+      @save="handleSave"
+    />
+
+    <!-- Delete Confirmation Modal -->
+    <ConfirmModal
+      v-if="showDeleteModal"
+      :show="showDeleteModal"
+      title="Delete Charging Station"
+      :message="`Are you sure you want to delete '${currentStation.name}'? This action cannot be undone.`"
+      confirm-text="Delete"
+      confirm-class="btn-danger"
+      @close="showDeleteModal = false"
+      @confirm="deleteStation"
+    />
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapGetters } from 'vuex'
+import {
+  BoltIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  MapPinIcon,
+  CpuChipIcon,
+  FunnelIcon,
+  XMarkIcon,
+  ExclamationTriangleIcon,
+  ArrowPathIcon,
+} from '@heroicons/vue/24/outline'
+import { LightningBoltIcon } from '@heroicons/vue/24/solid'
+import StationModal from '../components/StationModal.vue'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 export default {
   name: 'Dashboard',
+  components: {
+    BoltIcon,
+    CheckCircleIcon,
+    XCircleIcon,
+    LightningBoltIcon,
+    PlusIcon,
+    PencilIcon,
+    TrashIcon,
+    MapPinIcon,
+    CpuChipIcon,
+    FunnelIcon,
+    XMarkIcon,
+    ExclamationTriangleIcon,
+    ArrowPathIcon,
+    StationModal,
+    ConfirmModal,
+  },
   data() {
     return {
       filters: {
@@ -213,7 +312,7 @@ export default {
         powerOutput: null,
         connectorType: ''
       }
-    };
+    }
   },
   computed: {
     ...mapGetters({
@@ -221,21 +320,31 @@ export default {
       connectorTypes: 'stations/allConnectorTypes',
       loading: 'stations/isLoading',
       error: 'stations/error'
-    })
+    }),
+    activeStations() {
+      return this.stations.filter(station => station.status === 'Active').length
+    },
+    inactiveStations() {
+      return this.stations.filter(station => station.status === 'Inactive').length
+    },
+    totalPower() {
+      return this.stations.reduce((total, station) => total + (station.powerOutput || 0), 0)
+    }
   },
   created() {
-    this.fetchStations();
-    this.fetchConnectorTypes();
+    this.fetchStations()
+    this.fetchConnectorTypes()
   },
   methods: {
     fetchStations() {
-      this.$store.dispatch('stations/fetchStations');
+      this.$store.dispatch('stations/fetchStations')
     },
     fetchConnectorTypes() {
-      this.$store.dispatch('stations/fetchConnectorTypes');
+      this.$store.dispatch('stations/fetchConnectorTypes')
     },
     applyFilters() {
-      this.$store.dispatch('stations/fetchStations', this.filters);
+      this.$store.dispatch('stations/fetchStations', this.filters)
+      this.$toast.info('Filters applied')
     },
     resetFilters() {
       this.filters = {
@@ -243,21 +352,22 @@ export default {
         connectorType: '',
         minPower: null,
         maxPower: null
-      };
-      this.fetchStations();
+      }
+      this.fetchStations()
+      this.$toast.info('Filters reset')
     },
     editStation(station) {
-      this.currentStation = { ...station };
-      this.showEditModal = true;
+      this.currentStation = { ...station }
+      this.showEditModal = true
     },
     confirmDelete(station) {
-      this.currentStation = { ...station };
-      this.showDeleteModal = true;
+      this.currentStation = { ...station }
+      this.showDeleteModal = true
     },
     closeModal() {
-      this.showAddModal = false;
-      this.showEditModal = false;
-      this.resetCurrentStation();
+      this.showAddModal = false
+      this.showEditModal = false
+      this.resetCurrentStation()
     },
     resetCurrentStation() {
       this.currentStation = {
@@ -268,211 +378,43 @@ export default {
         status: 'Active',
         powerOutput: null,
         connectorType: ''
-      };
+      }
     },
-    addStation() {
-      this.$store.dispatch('stations/createStation', this.currentStation)
-        .then(() => {
-          this.closeModal();
+    handleSave(stationData) {
+      if (this.showEditModal) {
+        this.$store.dispatch('stations/updateStation', {
+          id: this.currentStation.id,
+          data: stationData
         })
-        .catch(error => {
-          console.error('Error adding station:', error);
-        });
-    },
-    updateStation() {
-      this.$store.dispatch('stations/updateStation', {
-        id: this.currentStation.id,
-        data: this.currentStation
-      })
-        .then(() => {
-          this.showEditModal = false;
-          this.resetCurrentStation();
-        })
-        .catch(error => {
-          console.error('Error updating station:', error);
-        });
+          .then(() => {
+            this.closeModal()
+            this.$toast.success('Station updated successfully!')
+          })
+          .catch(() => {
+            this.$toast.error('Failed to update station')
+          })
+      } else {
+        this.$store.dispatch('stations/createStation', stationData)
+          .then(() => {
+            this.closeModal()
+            this.$toast.success('Station created successfully!')
+          })
+          .catch(() => {
+            this.$toast.error('Failed to create station')
+          })
+      }
     },
     deleteStation() {
       this.$store.dispatch('stations/deleteStation', this.currentStation.id)
         .then(() => {
-          this.showDeleteModal = false;
-          this.resetCurrentStation();
+          this.showDeleteModal = false
+          this.resetCurrentStation()
+          this.$toast.success('Station deleted successfully!')
         })
-        .catch(error => {
-          console.error('Error deleting station:', error);
-        });
+        .catch(() => {
+          this.$toast.error('Failed to delete station')
+        })
     }
   }
-};
+}
 </script>
-
-<style scoped>
-h1 {
-  margin-bottom: 2rem;
-  color: #2c3e50;
-}
-
-.filters-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.filter-group {
-  flex: 1;
-  min-width: 150px;
-}
-
-.filter-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.actions-container {
-  margin-bottom: 1.5rem;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.stations-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.station-card {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-}
-
-.station-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.station-header h3 {
-  margin: 0;
-  color: #2c3e50;
-}
-
-.status-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.status-badge.active {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.status-badge.inactive {
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-.station-details {
-  margin-bottom: 1rem;
-}
-
-.station-details p {
-  margin: 0.5rem 0;
-}
-
-.station-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-}
-
-.btn-secondary:hover {
-  background-color: #5a6268;
-}
-
-.loading {
-  text-align: center;
-  padding: 2rem;
-  font-size: 1.25rem;
-  color: #6c757d;
-}
-
-.no-data {
-  text-align: center;
-  padding: 2rem;
-  color: #6c757d;
-}
-
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background-color: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #ddd;
-}
-
-.modal-header h2 {
-  margin: 0;
-  color: #2c3e50;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #6c757d;
-}
-
-.modal-body {
-  padding: 1.5rem;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-</style>
